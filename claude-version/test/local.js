@@ -1,0 +1,35 @@
+// Offline mode: no window.claude, so the app's local runtime (localStorage + storage events) is used.
+const { chromium } = require('playwright');
+const path = require('path');
+const PAGE = 'file://' + path.resolve(__dirname, '../index.html');
+(async () => {
+  const browser = await chromium.launch();
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const problems = [];
+  const open = async name => { const p = await ctx.newPage(); p.on('pageerror', e => problems.push(`[${name}] ${e.message}`)); p.on('console', m => { if (m.type() === 'error' && !m.text().includes('ERR_TUNNEL')) problems.push(`[${name}] ${m.text()}`); }); await p.goto(PAGE); await p.waitForFunction(() => !document.querySelector('#homeNote').textContent.includes('Connecting')); return p; };
+  const T = await open('teacher');
+  console.log('• note:', (await T.textContent('#homeNote')).slice(0, 60) + '…', '| chip:', await T.textContent('#topCtx'));
+  await T.fill('#hTopic', 'Photosynthesis');
+  await T.click('#hostBtn');
+  await T.waitForSelector('#v-host:not([hidden])');
+  const code = (await T.textContent('#codeChip')).replace(/\s/g, '');
+  const A = await open('student');
+  await A.fill('#joinCode', code); await A.click('#joinBtn');
+  await A.waitForFunction(() => document.querySelector('#sConn').textContent.includes('CONNECTED'), null, { timeout: 15000 });
+  await A.click('.pbtn[data-p="got"]');
+  await A.fill('#doubtInput', 'What does chlorophyll actually absorb?'); await A.click('#sendDoubt');
+  await T.waitForFunction(() => document.querySelectorAll('#hostWall .dbt').length >= 1, null, { timeout: 15000 });
+  console.log('• relayed doubt:', await T.textContent('#hostWall .dbt-text'), '| idx', await T.textContent('#kConf .kpi-v'));
+  console.log('• AI button state:', await T.$eval('#themesBody .row-actions', e => e.innerText.replace(/\n/g, ' / ')));
+  await T.click('#simBtn');
+  await T.waitForFunction(() => document.querySelectorAll('#hostWall .dbt').length >= 6, null, { timeout: 40000 });
+  console.log('• sim fallback doubts:', await T.$$eval('#hostWall .dbt', els => els.length), '|', await T.textContent('#kOnline .kpi-v'));
+  await T.click('#endBtn'); await T.click('#dlgYes');
+  await T.waitForSelector('#v-report:not([hidden])');
+  await T.waitForTimeout(500);
+  console.log('• report AI box:', (await T.textContent('#repAI')).slice(0, 120));
+  await A.waitForSelector('#sEnded:not([hidden])', { timeout: 15000 });
+  console.log('• student sees ended:', (await A.textContent('#sEnded')).slice(0, 60));
+  console.log('PROBLEMS:', problems.length ? problems.join('\n') : 'none');
+  await browser.close();
+})().catch(e => { console.error('FAILED', e); process.exit(1); });

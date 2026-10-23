@@ -1,0 +1,33 @@
+{
+  "rules": {
+    "col": {
+      "sessions": {
+        ".read": "auth != null",
+        ".indexOn": ["host"],
+        "$code": {
+          ".write": "auth != null && (data.exists() ? data.child('host').val() === auth.uid : newData.child('host').val() === auth.uid)"
+        }
+      }
+    },
+    "sub": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && root.child('col/sessions/' + $code + '/host').val() === auth.uid"
+      }
+    },
+    "priv": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "room": {
+      "$room": {
+        ".read": "auth != null",
+        "$peer": {
+          ".write": "auth != null && (newData.exists() ? newData.child('by').val() === auth.uid : data.child('by').val() === auth.uid)"
+        }
+      }
+    }
+  }
+}

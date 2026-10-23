@@ -1,0 +1,17 @@
+{
+  "addOns": {
+    "common": {
+      "name": "ClassPulse",
+      "logoUrl": "https://YOUR_GITHUB_USERNAME.github.io/classpulse-meet/logo.png"
+    },
+    "meet": {
+      "web": {
+        "sidePanelUrl": "https://YOUR_GITHUB_USERNAME.github.io/classpulse-meet/sidepanel.html",
+        "supportsScreenSharing": true,
+        "addOnOrigins": ["https://YOUR_GITHUB_USERNAME.github.io"],
+        "logoUrl": "https://YOUR_GITHUB_USERNAME.github.io/classpulse-meet/logo.png",
+        "darkModeLogoUrl": "https://YOUR_GITHUB_USERNAME.github.io/classpulse-meet/logo-dark.png"
+      }
+    }
+  }
+}
